@@ -41,9 +41,9 @@ class ApplicationSubmitter:
         self,
         backend: FormBackend | None = None,
         max_pages: int = 5,
-        backend_kind: str = "http",
+        backend_kind: str = "playwright",
     ):
-        self.backend = backend or HttpFormBackend()
+        self.backend = backend or (HttpFormBackend() if backend_kind == "http" else None)
         self.max_pages = max_pages
         self.backend_kind = backend_kind
         self.detector = FormDetector()
@@ -55,7 +55,10 @@ class ApplicationSubmitter:
         facts: dict[str, Any],
         files: dict[str, str],
     ) -> SubmissionOutcome:
-        if self.backend_kind == "playwright":
+        # Use HTTP backend if explicitly provided or backend_kind is http
+        use_http = isinstance(self.backend, HttpFormBackend) or self.backend_kind == "http"
+
+        if not use_http:
             from job_agent.browser.manager import InteractiveSubmitter
 
             result = InteractiveSubmitter().submit(application_url, facts, files, max_pages=self.max_pages)

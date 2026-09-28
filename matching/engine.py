@@ -4,6 +4,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from job_agent.ai.service import chain
 from job_agent.candidates.models import CandidateFactCollection
 from job_agent.database import models as m
 
@@ -11,13 +12,20 @@ SENIORITY_KEYWORDS = ["junior", "mid", "senior", "lead", "principal", "staff", "
 
 HARD_REQUIREMENT_WORDS = ["required", "must have", "must-have", "mandatory", "essential", "requirement"]
 DEGREE_KEYWORDS = ["bachelor", "master", "degree", "b.tech", "btech", "m.tech", "mtech", "msc", "bsc", "phd", "graduate", "undergraduate"]
-AUTHORIZATION_KEYWORDS = ["work authorization", "work authorisation", "authorization", "visa sponsorship", "sponsor", "must be authorized"]
+AUTHORIZATION_KEYWORDS = [
+    "work authorization", "work authorisation", "authorization", 
+    "visa sponsorship", "sponsor", "must be authorized",
+    "authorized to work", "work permit", "h1b", "h-1b",
+    "employment authorization", "work visa", "sponsorship",
+]
 
 # Neutral-but-informed scores so unknowns are never mistaken for matches.
 UNKNOWN_NEUTRAL = 70.0
 
 FIT_STRONG = 80.0
 FIT_POSSIBLE = 60.0
+
+SEMANTIC_MATCH_THRESHOLD = 0.72
 
 
 def _as_list(value: Any) -> list[Any]:
@@ -46,6 +54,7 @@ class MatchResult:
     certification_match: float
     salary_match: float
     remote_match: float
+    semantic_match: float = 0.0
     matched_skills: list[str] = field(default_factory=list)
     missing_requirements: list[str] = field(default_factory=list)
     reasons: list[str] = field(default_factory=list)
@@ -75,6 +84,7 @@ class MatchResult:
             "certification_match": self.certification_match,
             "salary_match": self.salary_match,
             "remote_match": self.remote_match,
+            "semantic_match": self.semantic_match,
             "matched_skills": self.matched_skills,
             "missing_requirements": self.missing_requirements,
             "reasons": self.reasons,
@@ -285,14 +295,27 @@ class MatchingEngine:
         for n in pref_notes:
             missing_requirements.append(n)
 
-        # weights unchanged so overall stays backward-compatible
+        semantic_score, semantic_reasons = self._semantic_match(facts, job)
+        # Defensive clamping: handle NaN, negative, or >1.0 from LLM
+        try:
+            semantic_score = float(semantic_score)
+            if semantic_score != semantic_score:  # NaN check
+                semantic_score = 0.0
+        except (TypeError, ValueError):
+            semantic_score = 0.0
+        semantic_score = max(0.0, min(1.0, semantic_score))
+        semantic_match = round(semantic_score * 100, 1)
+        if semantic_reasons:
+            reasons.extend([f"Semantic: {r}" for r in semantic_reasons[:3]])
+
         weights = {
-            "role": 0.30,
-            "experience": 0.20,
-            "skill": 0.25,
-            "location": 0.10,
-            "seniority": 0.05,
-            "salary": 0.10,
+            "role": 0.25,
+            "experience": 0.15,
+            "skill": 0.20,
+            "location": 0.08,
+            "seniority": 0.04,
+            "salary": 0.08,
+            "semantic": 0.20,
         }
         overall = (
             role_match * weights["role"]
@@ -301,6 +324,7 @@ class MatchingEngine:
             + location_match * weights["location"]
             + seniority_match * weights["seniority"]
             + salary_match * weights["salary"]
+            + semantic_match * weights["semantic"]
         )
         if excluded:
             overall = 0.0
@@ -341,6 +365,7 @@ class MatchingEngine:
             certification_match=round(cert_match, 1),
             salary_match=round(salary_match, 1),
             remote_match=round(remote_match, 1),
+            semantic_match=semantic_match,
             matched_skills=matched_skills,
             missing_requirements=missing_requirements,
             reasons=reasons,
@@ -366,8 +391,10 @@ class MatchingEngine:
             return job_skills, set()
         sentences = re.split(r"[.!\n;]", job_text)
         required: set[str] = set()
+        job_text_lower = job_text.lower()
         for skill in job_skills:
-            if any(skill in sent and any(w in sent for w in HARD_REQUIREMENT_WORDS) for sent in sentences):
+            skill_lower = skill.lower()
+            if any(skill_lower in sent.lower() and any(w in sent.lower() for w in HARD_REQUIREMENT_WORDS) for sent in sentences):
                 required.add(skill)
         preferred = job_skills - required
         return required, preferred
@@ -508,9 +535,40 @@ class MatchingEngine:
             reasons.append("No material risks detected")
         return reasons
 
+    def _semantic_match(self, facts: CandidateFactCollection, job: m.Job) -> tuple[float, list[str]]:
+        """Use LLM to compute semantic similarity between candidate profile and job."""
+        try:
+            candidate_summary = (
+                f"Title: {facts.value('current_title') or 'N/A'}\n"
+                f"Experience: {facts.value('years_of_experience') or 'N/A'} years\n"
+                f"Skills: {', '.join(_as_list(facts.value('skills')) + _as_list(facts.value('technologies'))) or 'N/A'}\n"
+                f"Certifications: {', '.join(_as_list(facts.value('certifications'))) or 'N/A'}\n"
+                f"Summary: {facts.value('summary') or 'N/A'}"
+            )
+            job_summary = (
+                f"Title: {job.title}\n"
+                f"Company: {job.company}\n"
+                f"Location: {job.location or 'N/A'}\n"
+                f"Remote: {job.remote_status or 'N/A'}\n"
+                f"Description: {(job.description or '')[:2000]}"
+            )
+            prompt = (
+                "Rate the semantic match between this candidate and job on a scale of 0.0 to 1.0.\n"
+                "Consider: role alignment, skill transferability, seniority fit, domain relevance.\n"
+                "Return only a JSON object: {\"score\": 0.85, \"reasons\": [\"reason1\", \"reason2\"]}\n\n"
+                f"CANDIDATE:\n{candidate_summary}\n\nJOB:\n{job_summary}"
+            )
+            result = chain.structured_output(prompt)
+            score = float(result.get("score", 0.0))
+            reasons = result.get("reasons", [])
+            return max(0.0, min(1.0, score)), reasons
+        except Exception:
+            return 0.0, []
+
 
 def _requires_authorization(job_text: str) -> bool:
-    return any(k in job_text for k in AUTHORIZATION_KEYWORDS)
+    text_lower = job_text.lower()
+    return any(k in text_lower for k in AUTHORIZATION_KEYWORDS)
 
 
 def job_text_lower(description: str | None) -> str:

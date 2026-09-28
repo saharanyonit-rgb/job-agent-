@@ -39,6 +39,12 @@ class JobAgentOrchestrator:
         runtime_status.cycle_complete("discover", result)
         return result
 
+    async def discover_async(self) -> dict[str, Any]:
+        runtime_status.task_start("discover")
+        result = await self.discovery.run_discovery_async()
+        runtime_status.cycle_complete("discover", result)
+        return result
+
     def verify(self, limit: int | None = None) -> dict[str, Any]:
         runtime_status.task_start("verify")
         jobs = self.jobs.jobs_to_verify() if limit is None else self.jobs.jobs_to_verify()[:limit]
@@ -223,7 +229,8 @@ class JobAgentOrchestrator:
                 summary["submitted"].append({"job_id": job.id, "dry_run": True})
                 continue
 
-            submitter = ApplicationSubmitter(backend_kind="http")
+            backend_kind = "http" if job.source == "mock_ats" else "playwright"
+            submitter = ApplicationSubmitter(backend_kind=backend_kind)
             outcome = submitter.apply(
                 application_url=job.application_url or job.url or "",
                 facts={k: f.value for k, f in facts_dict.items()},

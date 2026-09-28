@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime
 from typing import Any
 
@@ -22,6 +23,12 @@ def _breaker(name: str) -> CircuitBreaker:
     return _breakers[name]
 
 
+async def _run_adapter_async(adapter: SourceAdapter, query: dict[str, Any]) -> DiscoveryResult:
+    """Run a single adapter's discover_jobs in a thread pool."""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, adapter.discover_jobs, query)
+
+
 class DiscoveryService:
     def __init__(self, db: Session, job_service: JobService | None = None):
         self.db = db
@@ -29,33 +36,50 @@ class DiscoveryService:
         register_default_adapters()
 
     def run_discovery(self, queries: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
+        """Synchronous version for backward compatibility."""
+        return asyncio.run(self.run_discovery_async(queries))
+
+    async def run_discovery_async(self, queries: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
+        """Async version: runs all adapters in parallel."""
         queries = queries or {}
         totals = {"discovered": 0, "created": 0, "updated": 0, "sources_ok": 0, "sources_failed": 0, "errors": []}
-        for adapter in registry.all():
-            if not adapter.enabled:
-                continue
+
+        enabled_adapters = [a for a in registry.all() if a.enabled]
+        if not enabled_adapters:
+            return totals
+
+        # Prepare tasks
+        tasks = []
+        for adapter in enabled_adapters:
             breaker = _breaker(adapter.name)
             if breaker.is_open:
                 totals["errors"].append({"source": adapter.name, "error": "circuit open"})
                 continue
             query = queries.get(adapter.name, {})
-            try:
-                result = adapter.discover_jobs(query)
-            except Exception as exc:
+            tasks.append((adapter, _run_adapter_async(adapter, query)))
+
+        # Run all in parallel
+        results = await asyncio.gather(*[t[1] for t in tasks], return_exceptions=True)
+
+        for (adapter, _), result in zip(tasks, results):
+            if isinstance(result, Exception):
+                breaker = _breaker(adapter.name)
                 breaker.record_failure()
-                self._mark_source(adapter.name, healthy=False, error=str(exc))
+                self._mark_source(adapter.name, healthy=False, error=str(result))
                 totals["sources_failed"] += 1
-                totals["errors"].append({"source": adapter.name, "error": str(exc)})
-                log.error("Source %s failed: %s", adapter.name, exc)
+                totals["errors"].append({"source": adapter.name, "error": str(result)})
+                log.error("Source %s failed: %s", adapter.name, result)
                 continue
 
             if result.error:
+                breaker = _breaker(adapter.name)
                 breaker.record_failure()
                 self._mark_source(adapter.name, healthy=False, error=result.error)
                 totals["sources_failed"] += 1
                 totals["errors"].append({"source": adapter.name, "error": result.error})
                 continue
 
+            breaker = _breaker(adapter.name)
             breaker.record_success()
             self._mark_source(adapter.name, healthy=True, status=result.status.value, count=len(result.jobs))
             totals["sources_ok"] += 1
@@ -68,6 +92,7 @@ class DiscoveryService:
                 except Exception as exc:
                     totals["errors"].append({"source": adapter.name, "job": raw.title, "error": str(exc)})
                     log.error("Failed to upsert job %r: %s", raw.title, exc)
+
         return totals
 
     def _mark_source(self, name: str, healthy: bool, error: str | None = None, status: str | None = None, count: int | None = None) -> None:

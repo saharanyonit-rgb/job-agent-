@@ -80,6 +80,8 @@ def register_default_adapters() -> AdapterRegistry:
     from job_agent.discovery.adapters.company_career import CompanyCareerAdapter
     from job_agent.discovery.adapters.greenhouse import GreenhouseAdapter
     from job_agent.discovery.adapters.lever import LeverAdapter
+    from job_agent.discovery.adapters.linkedin import LinkedInAdapter
+    from job_agent.discovery.adapters.indeed import IndeedAdapter, JSearchAdapter
     from job_agent.discovery.adapters.mock_source import MockSourceAdapter
     from job_agent.discovery.adapters.ats import MockATSAdapter
 
@@ -93,4 +95,10 @@ def register_default_adapters() -> AdapterRegistry:
         registry.register(CompanyCareerAdapter())
     if not registry.get(MockATSAdapter.name):
         registry.register(MockATSAdapter())
+    if not registry.get(LinkedInAdapter.name):
+        registry.register(LinkedInAdapter())
+    if not registry.get(IndeedAdapter.name):
+        registry.register(IndeedAdapter())
+    if not registry.get(JSearchAdapter.name):
+        registry.register(JSearchAdapter())
     return registry
