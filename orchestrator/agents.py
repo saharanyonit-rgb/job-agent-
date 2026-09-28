@@ -10,7 +10,7 @@ from job_agent.interviews.service import InterviewService
 from job_agent.interviews.preparation import InterviewPreparationAgent
 from job_agent.candidates.service import CandidateService
 from job_agent.database import models as m
-from job_agent.calendar.service import CalendarService
+from job_agent.calendar_service.service import CalendarService
 from job_agent.notifications.engine import NotificationEngine
 from job_agent.core.logging_config import get_logger
 
