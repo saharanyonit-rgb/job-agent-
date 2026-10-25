@@ -17,16 +17,23 @@ class OpenAIProvider(LLMProvider):
 
     def _chat(self, messages: list[dict[str, str]], max_tokens: int | None = None) -> str:
         payload: dict[str, Any] = {"model": self.model, "messages": messages}
-        if max_tokens:
-            payload["max_tokens"] = max_tokens
+        # Default to a generous budget: reasoning models (e.g. NVIDIA NIM
+        # gpt-oss endpoints) spend most tokens on internal reasoning before
+        # emitting content; a small cap yields an empty `content` field.
+        payload["max_tokens"] = max_tokens or 2048
         resp = httpx.post(
             f"{self.base_url}/chat/completions",
             headers={"Authorization": f"Bearer {self.api_key}"},
             json=payload,
-            timeout=60,
+            timeout=120,
         )
         resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"]
+        message = resp.json()["choices"][0]["message"]
+        content = message.get("content")
+        if not content:
+            # Some OpenAI-compatible providers only fill `reasoning_content`.
+            content = message.get("reasoning_content") or ""
+        return content.strip()
 
     def generate(self, prompt: str, system: str | None = None, **kwargs: Any) -> str:
         messages = []

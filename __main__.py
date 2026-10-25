@@ -377,6 +377,24 @@ def cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_policy(args: argparse.Namespace) -> int:
+    from job_agent.applications.policy import PolicyService
+    from job_agent.database.base import SessionLocal, init_db
+
+    init_db()
+    db = SessionLocal()
+    try:
+        svc = PolicyService(db)
+        if args.set_mode is not None:
+            policy = svc.update(mode=args.set_mode)
+        else:
+            policy = svc.get()
+        print(json.dumps(policy.to_dict(), indent=2, default=str))
+    finally:
+        db.close()
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="job_agent",
@@ -410,6 +428,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     status = sub.add_parser("status", help="Print source health and counts")
     status.set_defaults(func=cmd_status)
+
+    policy = sub.add_parser("policy", help="Show or change the application policy mode")
+    policy.add_argument(
+        "--set-mode",
+        choices=["DISCOVERY_ONLY", "PREPARE_AND_APPROVE", "AUTONOMOUS"],
+        default=None,
+        help="Set the policy mode (AUTONOMOUS enables unattended submissions)",
+    )
+    policy.set_defaults(func=cmd_policy)
 
     imp = sub.add_parser(
         "import_resume",

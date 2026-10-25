@@ -9,7 +9,6 @@ from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
 from job_agent.api.deps import get_db
-from job_agent.database.base import engine
 from job_agent.database import models as m
 
 router = APIRouter(prefix="/api/backup", tags=["backup"])

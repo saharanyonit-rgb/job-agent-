@@ -4,7 +4,6 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from job_agent.core.observability import ObservabilityService
 from job_agent.email_service.classifier import EmailClassifier
 from job_agent.interviews.service import InterviewService
 from job_agent.interviews.preparation import InterviewPreparationAgent

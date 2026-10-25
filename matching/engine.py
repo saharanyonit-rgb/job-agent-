@@ -391,7 +391,6 @@ class MatchingEngine:
             return job_skills, set()
         sentences = re.split(r"[.!\n;]", job_text)
         required: set[str] = set()
-        job_text_lower = job_text.lower()
         for skill in job_skills:
             skill_lower = skill.lower()
             if any(skill_lower in sent.lower() and any(w in sent.lower() for w in HARD_REQUIREMENT_WORDS) for sent in sentences):

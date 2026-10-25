@@ -6,10 +6,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from job_agent.analytics.outcomes import OutcomeAnalyzer
-from job_agent.applications.pipeline import VALID_TRANSITIONS
 from job_agent.career.plan import CareerPlanService
 from job_agent.candidates.profile import CandidateProfileService
-from job_agent.candidates.skills import SKILL_LIFECYCLE
 from job_agent.database import models as m
 
 _QUESTION_CATALOG: list[dict[str, Any]] = [
@@ -82,7 +80,6 @@ class CareerAgent:
         if candidate is None:
             return {"status": "INSUFFICIENT_DATA", "answer": "No candidate profile found."}
         profile = CandidateProfileService(self.db).build(candidate.id)
-        plan = self.plan_svc.last_plan(candidate.id)
         return {
             "status": "KNOWN",
             "answer": (

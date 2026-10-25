@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from job_agent.analytics.outcomes import OutcomeAnalyzer
 from job_agent.career.plan import CareerPlanService
 from job_agent.candidates.profile import CandidateProfileService
-from job_agent.api.deps import JobAgentOrchestrator, get_db
+from job_agent.api.deps import get_db
 from job_agent.database import models as m
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])

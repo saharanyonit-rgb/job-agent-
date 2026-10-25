@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -9,6 +10,19 @@ from bs4 import BeautifulSoup
 
 from job_agent.discovery.base import DiscoveryResult, IntegrationStatus, SourceAdapter
 from job_agent.jobs.normalize import RawJob
+
+
+def _parse_iso_datetime(value: Any) -> datetime | None:
+    """Best-effort parse of an ISO-8601 string into a naive UTC datetime."""
+    if not value or not isinstance(value, str):
+        return None
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
 
 
 class IndeedAdapter(SourceAdapter):
@@ -44,12 +58,21 @@ class IndeedAdapter(SourceAdapter):
         soup = BeautifulSoup(html, "html.parser")
         jobs: list[RawJob] = []
 
-        for card in soup.find_all("div", class_=re.compile(r"job_seen_beacon|resultContent")):
+        cards = soup.find_all("div", class_=re.compile(r"job_seen_beacon|resultContent"))
+        if not cards:
+            # Markup changed; fall back to any anchor carrying a job link (jk= param).
+            cards = [a.find_parent("div") or a for a in soup.find_all("a", href=re.compile(r"[?&]jk="))]
+
+        for card in cards:
             try:
-                title_elem = card.find("h2", class_=re.compile(r"jobTitle"))
+                title_elem = card.find("h2", class_=re.compile(r"jobTitle")) or card.find(
+                    "a", href=re.compile(r"[?&]jk=")
+                )
                 company_elem = card.find("span", class_=re.compile(r"companyName"))
                 location_elem = card.find("div", class_=re.compile(r"companyLocation"))
-                link_elem = card.find("a", class_=re.compile(r"jcs-JobTitle"), href=True)
+                link_elem = card.find("a", class_=re.compile(r"jcs-JobTitle"), href=True) or card.find(
+                    "a", href=re.compile(r"[?&]jk=")
+                )
 
                 if not title_elem or not link_elem:
                     continue
@@ -170,7 +193,7 @@ class JSearchAdapter(SourceAdapter):
                             source=self.name,
                             employment_type=item.get("job_employment_type"),
                             salary_text=item.get("job_salary"),
-                            posted_date=item.get("job_posted_at_datetime_utc"),
+                            posted_date=_parse_iso_datetime(item.get("job_posted_at_datetime_utc")),
                         )
                     )
             except httpx.HTTPError as exc:

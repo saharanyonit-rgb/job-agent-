@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from job_agent.api.deps import JobAgentOrchestrator, get_db
-from job_agent.applications.policy import ApplicationPolicy, PolicyService, MODES
+from job_agent.api.deps import get_db
+from job_agent.applications.policy import PolicyService, MODES
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 

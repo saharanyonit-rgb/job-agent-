@@ -6,7 +6,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from job_agent.applications.pipeline import ApplicationPipeline, InvalidTransition
+from job_agent.applications.pipeline import ApplicationPipeline
 from job_agent.applications.policy import PolicyService
 from job_agent.applications.strategy import ApplicationStrategyEngine
 from job_agent.applications.validation import validate_application

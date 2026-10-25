@@ -7,7 +7,6 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from job_agent.database import models as m
-from job_agent.core.audit import AuditLogger
 
 
 class RuntimeStatus:
@@ -39,8 +38,6 @@ class ObservabilityService:
         self.db = db
 
     def summary(self) -> dict[str, Any]:
-        from job_agent.database.base import engine
-
         app_counts = self.db.execute(select(m.Application.status, func.count()).group_by(m.Application.status)).all()
         job_counts = self.db.execute(select(m.Job.verification_status, func.count()).group_by(m.Job.verification_status)).all()
         interviews = self.db.query(m.Interview).count()

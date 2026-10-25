@@ -15,7 +15,6 @@ from job_agent.candidates.models import (
 from job_agent.candidates.resume_parser import (
     ResumeParseError,
     ResumeParsed,
-    ResumeText,
     ResumeParser,
     extract_text,
 )

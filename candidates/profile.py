@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from job_agent.candidates.models import CandidateFactCollection, FactStatus

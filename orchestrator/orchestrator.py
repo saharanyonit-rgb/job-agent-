@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -14,7 +13,6 @@ from job_agent.matching.engine import MatchingEngine
 from job_agent.applications.service import ApplicationService
 from job_agent.core.observability import ObservabilityService, runtime_status
 from job_agent.core.logging_config import get_logger
-from job_agent.core.errors import HandoffRequiredError
 
 log = get_logger(__name__)
 
@@ -108,9 +106,7 @@ class JobAgentOrchestrator:
     def prepare_and_submit_applications(self, candidate_id: int, dry_run: bool = False) -> dict[str, Any]:
         """Match, prepare documents, validate, and submit per policy. This is the
         vertical slice behind AU'TONOMOUS and PREPARE_AND_APPROVE modes."""
-        from job_agent.browser.manager import HttpFormBackend
         from job_agent.browser.service import ApplicationSubmitter
-        from job_agent.browser.mapper import SENSITIVE_FIELDS
 
         self.match_all(candidate_id)
         facts = self.candidates.get_facts(candidate_id)
@@ -229,11 +225,36 @@ class JobAgentOrchestrator:
                 summary["submitted"].append({"job_id": job.id, "dry_run": True})
                 continue
 
-            backend_kind = "http" if job.source == "mock_ats" else "playwright"
+            backend_kind = "http" if job.source == "mock_ats" else "auto"
             submitter = ApplicationSubmitter(backend_kind=backend_kind)
+            # Base facts from the verified candidate profile; enrich with
+            # per-job context so generated free-text answers (why interested,
+            # leadership) can reference the specific role being applied to.
+            submission_facts = {k: f.value for k, f in facts_dict.items()}
+            submission_facts.setdefault("job_title", job.normalized_title or job.title)
+            submission_facts.setdefault("company", job.company)
+            if not submission_facts.get("why_interested"):
+                try:
+                    from job_agent.ai.service import AIProviderChain
+
+                    prompt = (
+                        "Write a 2-3 sentence answer to 'Why are you interested in this role?' "
+                        f"for the position of {job.title} at {job.company}. "
+                        f"Candidate: {submission_facts.get('current_title') or 'professional'} with "
+                        f"{submission_facts.get('years_of_experience') or 'several'} years of experience. "
+                        f"Key skills: {', '.join(str(s) for s in (submission_facts.get('skills') or [])[:8])}. "
+                        "Be specific and honest; no superlatives."
+                    )
+                    ai_answer = AIProviderChain().generate(prompt)
+                    if ai_answer and len(ai_answer.strip()) > 40:
+                        submission_facts["generated_why"] = ai_answer.strip()
+                except Exception:
+                    # No AI provider configured -> fall back to deterministic
+                    # template generation inside FormMapper (uses job_title).
+                    pass
             outcome = submitter.apply(
                 application_url=job.application_url or job.url or "",
-                facts={k: f.value for k, f in facts_dict.items()},
+                facts=submission_facts,
                 files={"resume": resume.path if resume else ""},
             )
 
