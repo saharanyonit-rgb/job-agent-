@@ -103,6 +103,46 @@ class HttpFormBackend:
         return result
 
 
+def playwright_available() -> bool:
+    """True when the playwright package AND a usable Chromium binary are present."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        return False
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            browser.close()
+        return True
+    except Exception:
+        return False
+
+
+def resolve_backend_kind(preferred: str = "auto") -> str:
+    """Resolve 'auto'/'playwright'/'http' to a concrete backend kind.
+
+    Falls back to 'http' when Playwright is requested but unavailable, so the
+    pipeline degrades gracefully instead of crashing mid-run.
+    """
+    settings = get_settings()
+    kind = preferred if preferred != "auto" else settings.browser_backend
+    if kind == "http":
+        return "http"
+    if playwright_available():
+        return "playwright"
+    log.warning("Playwright backend requested but unavailable; falling back to HTTP form backend")
+    return "http"
+
+
+# Realistic desktop UA + viewport used by all Playwright sessions to reduce
+# trivial bot-detection (default Playwright UA contains 'HeadlessChrome').
+_BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+)
+_VIEWPORT = {"width": 1366, "height": 900}
+
+
 class PlaywrightFormBackend:
     """Real-browser backend using Playwright. Lazily imports so tests without
     Playwright installed still pass."""
@@ -116,12 +156,18 @@ class PlaywrightFormBackend:
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=self.headless)
-            page = browser.new_page()
-            page.goto(url, wait_until="networkidle", timeout=30000)
+            browser = p.chromium.launch(
+                headless=self.headless,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
+            context = browser.new_context(user_agent=_BROWSER_UA, viewport=_VIEWPORT)
+            page = context.new_page()
+            resp = page.goto(url, wait_until="networkidle", timeout=30000)
             html = page.content()
-            result = NavigationResult(html=html, status_code=200, url=page.url)
+            status = resp.status if resp else 200
+            result = NavigationResult(html=html, status_code=status, url=page.url)
             result.page_detection = self.detector.detect(html)
+            context.close()
             browser.close()
         return result
 
@@ -156,39 +202,53 @@ class InteractiveSubmitter:
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=self.headless)
-            page = browser.new_page()
-            page.goto(start_url, wait_until="networkidle", timeout=45000)
+            browser = p.chromium.launch(
+                headless=self.headless,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
+            context = browser.new_context(user_agent=_BROWSER_UA, viewport=_VIEWPORT)
+            # Mask the webdriver flag so basic bot checks don't reject us.
+            context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            page = context.new_page()
+            try:
+                page.goto(start_url, wait_until="networkidle", timeout=45000)
 
-            for _ in range(max_pages):
-                detection = self.detector.detect(page.content())
-                if detection.get("captcha") or detection.get("mfa"):
-                    return NavigationResult(
-                        html=page.content(),
-                        status_code=403,
-                        url=page.url,
-                        page_detection=detection,
-                    )
-                if detection.get("success"):
-                    return NavigationResult(
-                        html=page.content(),
-                        status_code=200,
-                        url=page.url,
-                        page_detection=detection,
-                    )
-                form = page.locator("form").first
-                if not form.count():
-                    break
-                self._fill_visible(page, values, files)
-                page.locator("button[type=submit], input[type=submit]").first.click()
-                try:
-                    page.wait_for_load_state("networkidle", timeout=15000)
-                except Exception:
-                    pass
-            html = page.content()
-            detection = self.detector.detect(html)
-            result = NavigationResult(html=html, status_code=200, url=page.url, page_detection=detection)
-            browser.close()
+                for _ in range(max_pages):
+                    detection = self.detector.detect(page.content())
+                    if detection.get("captcha") or detection.get("mfa"):
+                        return NavigationResult(
+                            html=page.content(),
+                            status_code=403,
+                            url=page.url,
+                            page_detection=detection,
+                        )
+                    if detection.get("success"):
+                        return NavigationResult(
+                            html=page.content(),
+                            status_code=200,
+                            url=page.url,
+                            page_detection=detection,
+                        )
+                    form = page.locator("form").first
+                    if not form.count():
+                        break
+                    self._fill_visible(page, values, files)
+                    submit_btn = page.locator("button[type=submit], input[type=submit]").first
+                    if not submit_btn.count():
+                        # No explicit submit control; try implicit form submit.
+                        form.press("Enter")
+                    else:
+                        submit_btn.click()
+                    try:
+                        page.wait_for_load_state("networkidle", timeout=15000)
+                    except Exception:
+                        pass
+                html = page.content()
+                detection = self.detector.detect(html)
+                result = NavigationResult(html=html, status_code=200, url=page.url, page_detection=detection)
+            finally:
+                context.close()
+                browser.close()
             return result
 
     def _fill_visible(self, page, values: dict[str, Any], files: dict[str, str]) -> None:

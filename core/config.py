@@ -63,6 +63,12 @@ class Settings(BaseSettings):
     browser_headless: bool = True
     storage_dir: str = "./storage"
 
+    # Browser backend selection for application submission.
+    #   auto       -> Playwright when installed, otherwise HTTP fallback
+    #   playwright -> require Playwright (real-browser form filling)
+    #   http       -> plain HTTP form backend only
+    browser_backend: str = "auto"
+
 
 @lru_cache
 def get_settings() -> Settings:

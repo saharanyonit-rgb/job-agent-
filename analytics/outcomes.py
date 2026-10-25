@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select
@@ -42,10 +41,8 @@ class OutcomeAnalyzer:
 
         responded = [a for a in submitted if self._response(a)]
         rejected = [a for a in submitted if a.status == "REJECTED"]
-        with_rejection_reason = [a for a in rejected if a.rejection_reason]
         offers = [a for a in submitted if a.status in {"OFFER", "ACCEPTED"}]
         interviews = [a for a in submitted if self._reached_interview(a)]
-        assessments = [a for a in submitted if a.status in {"ASSESSMENT", "RECRUITER_RESPONSE"} or self._reached_interview(a)]
 
         n = len(submitted)
         funnel = self._funnel(submitted)

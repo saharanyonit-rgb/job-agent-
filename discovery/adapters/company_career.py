@@ -3,14 +3,13 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any
 
 import httpx
 from bs4 import BeautifulSoup
 
 from job_agent.discovery.base import DiscoveryResult, IntegrationStatus, SourceAdapter
-from job_agent.jobs.normalize import RawJob, extract_years, parse_salary
+from job_agent.jobs.normalize import RawJob, extract_years
 
 
 @dataclass
@@ -63,7 +62,6 @@ class CompanyCareerAdapter(SourceAdapter):
 
     def discover_jobs(self, query: dict[str, Any] | None = None) -> DiscoveryResult:
         query = query or {}
-        url = query.get("url") or (query.get("company") and self._url_for_company(str(query.get("company"))))
         jobs: list[RawJob] = []
         events: list[dict[str, Any]] = []
         try:

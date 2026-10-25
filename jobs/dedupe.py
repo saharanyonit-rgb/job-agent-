@@ -103,7 +103,6 @@ def find_duplicate_groups(jobs: Iterable[m.Job]) -> list[list[m.Job]]:
             semantic_groups.append(group)
         processed.add(job1.id)
 
-    merged: dict[int, m.Job] = {}
     final: list[list[m.Job]] = []
     seen_ids: set[int] = set()
 

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from job_agent.database import models as m
 from job_agent.email_service.adapters import get_email_adapter
-from job_agent.email_service.classifier import EmailClassifier, InterviewExtractor, RawEmail
+from job_agent.email_service.classifier import EmailClassifier, InterviewExtractor
 
 
 class EmailService:

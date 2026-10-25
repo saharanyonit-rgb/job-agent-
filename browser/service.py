@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from job_agent.browser.detectors import FormDetector, FormSpec
-from job_agent.browser.manager import FormBackend, HttpFormBackend, NavigationResult
-from job_agent.browser.mapper import FormMapper, MappingResult
+from job_agent.browser.detectors import FormDetector
+from job_agent.browser.manager import FormBackend, HttpFormBackend
+from job_agent.browser.mapper import FormMapper
 from job_agent.core.logging_config import get_logger
 
 log = get_logger(__name__)
@@ -41,11 +41,18 @@ class ApplicationSubmitter:
         self,
         backend: FormBackend | None = None,
         max_pages: int = 5,
-        backend_kind: str = "playwright",
+        backend_kind: str = "auto",
     ):
-        self.backend = backend or (HttpFormBackend() if backend_kind == "http" else None)
+        from job_agent.browser.manager import PlaywrightFormBackend, resolve_backend_kind
+
+        self.backend_kind = resolve_backend_kind(backend_kind)
+        if backend is not None:
+            self.backend: FormBackend = backend
+        elif self.backend_kind == "http":
+            self.backend = HttpFormBackend()
+        else:
+            self.backend = PlaywrightFormBackend()
         self.max_pages = max_pages
-        self.backend_kind = backend_kind
         self.detector = FormDetector()
         self.mapper = FormMapper()
 
@@ -55,7 +62,7 @@ class ApplicationSubmitter:
         facts: dict[str, Any],
         files: dict[str, str],
     ) -> SubmissionOutcome:
-        # Use HTTP backend if explicitly provided or backend_kind is http
+        # Use HTTP backend if explicitly provided or backend_kind resolved to http
         use_http = isinstance(self.backend, HttpFormBackend) or self.backend_kind == "http"
 
         if not use_http:

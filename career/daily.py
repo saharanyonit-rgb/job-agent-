@@ -7,7 +7,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from job_agent.analytics.outcomes import OutcomeAnalyzer
-from job_agent.career.plan import CareerPlanService
 from job_agent.candidates.profile import CandidateProfileService
 from job_agent.core.observability import ObservabilityService, runtime_status
 from job_agent.database import models as m
@@ -38,7 +37,6 @@ class DailyCareerLoop:
             pipeline = {"error": "no orchestrator provided"}
 
         outcomes = OutcomeAnalyzer(self.db).compute(candidate_id)
-        plan = CareerPlanService(self.db).generate(candidate_id)
         gaps = self._gaps(candidate_id)
 
         report = self._build_report(pipeline, outcomes, gaps, profile, candidate_id)

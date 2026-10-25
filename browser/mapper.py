@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any
 
-from job_agent.browser.detectors import FieldSpec, FormSpec, PageDetector
+from job_agent.browser.detectors import FieldSpec, FormSpec
 
 
 class MappingResult:

@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 from job_agent.ai.service import chain
 from job_agent.analytics.outcomes import OutcomeAnalyzer
 from job_agent.career.agent import CareerAgent
-from job_agent.career.daily import DailyCareerLoop
 from job_agent.career.plan import CareerPlanService
 from job_agent.candidates.profile import CandidateProfileService
 from job_agent.candidates.skills import CandidateSkillService
