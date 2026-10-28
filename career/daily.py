@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from core.analytics.outcomes import OutcomeAnalyzer
 from core.career.plan import CareerPlanService
 from core.candidates.profile import CandidateProfileService
-from core.core.observability import ObservabilityService, runtime_status
+from core.observability import ObservabilityService, runtime_status
 from core.database import models as m
 
 

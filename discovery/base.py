@@ -86,6 +86,7 @@ def _real_sources_only() -> bool:
 def register_default_adapters() -> AdapterRegistry:
     from core.discovery.adapters.company_career import CompanyCareerAdapter
     from core.discovery.adapters.greenhouse import GreenhouseAdapter
+    from core.discovery.adapters.job_boards import RemoteJobBoardAdapter
     from core.discovery.adapters.lever import LeverAdapter
     from core.discovery.adapters.linkedin import LinkedInAdapter, LinkedInGuestAdapter
     from core.discovery.adapters.indeed import IndeedAdapter, JSearchAdapter
@@ -94,6 +95,8 @@ def register_default_adapters() -> AdapterRegistry:
         registry.register(GreenhouseAdapter())
     if not registry.get(LeverAdapter.name):
         registry.register(LeverAdapter())
+    if not registry.get(RemoteJobBoardAdapter.name):
+        registry.register(RemoteJobBoardAdapter())
     if not registry.get(CompanyCareerAdapter.name):
         registry.register(CompanyCareerAdapter())
     if not registry.get(LinkedInAdapter.name):

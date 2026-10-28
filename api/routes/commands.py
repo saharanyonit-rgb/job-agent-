@@ -112,7 +112,7 @@ class CommandHandler:
         return {"intent": intent, "response": "Command not fully handled."}
 
     def _daily_report(self) -> dict:
-        from core.core.observability import ObservabilityService
+        from core.observability import ObservabilityService
 
         obs = ObservabilityService(self.db)
         dash = self.db

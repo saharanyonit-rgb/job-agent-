@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from core.core.logging_config import get_logger
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 

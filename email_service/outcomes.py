@@ -14,7 +14,7 @@ from core.applications.pipeline import (
     ApplicationPipeline,
 )
 from core.database import models as m
-from core.core.config import get_settings
+from core.config import get_settings
 from core.email_service.linking import EvidenceLinker, LINK_NO_EVIDENCE, LINK_AMBIGUOUS, LinkDecision
 
 

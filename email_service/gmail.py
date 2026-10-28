@@ -11,7 +11,7 @@ from typing import Any
 
 import httpx
 
-from core.core.config import get_settings
+from core.config import get_settings
 from core.email_service.adapters import EmailAdapter
 from core.email_service.classifier import RawEmail
 

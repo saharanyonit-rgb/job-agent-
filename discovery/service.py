@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 from core.database import models as m
 from core.discovery.base import DiscoveryResult, SourceAdapter, registry, register_default_adapters
 from core.jobs.service import JobService
-from core.core.errors import CircuitBreaker
-from core.core.logging_config import get_logger
+from core.errors import CircuitBreaker
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 

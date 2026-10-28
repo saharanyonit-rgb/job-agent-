@@ -5,8 +5,8 @@ from typing import Any, Protocol
 
 import httpx
 from core.browser.detectors import PageDetector
-from core.core.config import get_settings
-from core.core.logging_config import get_logger
+from core.config import get_settings
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 

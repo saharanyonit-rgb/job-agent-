@@ -10,7 +10,7 @@ from core.database import models as m
 from core.jobs.dedupe import find_duplicate_groups, merge_duplicates
 from core.jobs.normalize import NormalizedJob, normalize_job, RawJob
 from core.jobs.verify import JobVerifier, VerificationResult
-from core.core.logging_config import get_logger
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 

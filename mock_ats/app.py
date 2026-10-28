@@ -35,7 +35,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 try:  # normal case: package imported as part of the core package
     from core.mock_ats.store import JOBS, SUBMISSIONS, public_jobs
 except ModuleNotFoundError:  # fallback: standalone `mock_ats` on sys.path
-    from mock_ats.store import JOBS, SUBMISSIONS, public_jobs
+    from core.mock_ats.store import JOBS, SUBMISSIONS, public_jobs
 
 app = FastAPI(title="Mock ATS", version="1.0.0")
 

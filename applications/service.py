@@ -14,7 +14,7 @@ from core.candidates.profile import CandidateProfileService
 from core.candidates.service import CandidateService
 from core.database import models as m
 from core.matching.engine import MatchingEngine
-from core.core.logging_config import get_logger
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 

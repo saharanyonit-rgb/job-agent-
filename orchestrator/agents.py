@@ -4,7 +4,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from core.core.observability import ObservabilityService
+from core.observability import ObservabilityService
 from core.email_service.classifier import EmailClassifier
 from core.interviews.service import InterviewService
 from core.interviews.preparation import InterviewPreparationAgent
@@ -12,7 +12,7 @@ from core.candidates.service import CandidateService
 from core.database import models as m
 from core.calendar_service.service import CalendarService
 from core.notifications.engine import NotificationEngine
-from core.core.logging_config import get_logger
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 

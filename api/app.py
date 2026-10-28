@@ -5,8 +5,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from core.core.config import get_settings
-from core.core.logging_config import setup_logging
+from core.config import get_settings
+from core.logging_config import setup_logging
 from core.database.base import init_db
 
 

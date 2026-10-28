@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from core.api.deps import get_db
 from core.discovery.service import DiscoveryService
-from core.core.observability import ObservabilityService
+from core.observability import ObservabilityService
 
 router = APIRouter(prefix="/api/sources", tags=["sources"])
 

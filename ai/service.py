@@ -5,8 +5,8 @@ from typing import Any
 from core.ai.fallback import RuleBasedProvider
 from core.ai.provider import LLMProvider
 from core.ai.providers import AnthropicProvider, OllamaProvider, OpenAIProvider
-from core.core.config import get_settings
-from core.core.logging_config import get_logger
+from core.config import get_settings
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 

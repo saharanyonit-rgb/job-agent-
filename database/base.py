@@ -7,7 +7,7 @@ from typing import Iterator
 from sqlalchemy import create_engine, inspect as sa_inspect, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-from core.core.config import get_settings
+from core.config import get_settings
 
 
 class Base(DeclarativeBase):

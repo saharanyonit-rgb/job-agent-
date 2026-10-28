@@ -6,7 +6,7 @@ from typing import Any
 from core.browser.detectors import FormDetector, FormSpec
 from core.browser.manager import FormBackend, HttpFormBackend, NavigationResult
 from core.browser.mapper import FormMapper, MappingResult
-from core.core.logging_config import get_logger
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 

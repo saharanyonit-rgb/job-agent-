@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from core.api.deps import CandidateService, get_db
-from core.core.config import get_settings
+from core.config import get_settings
 from core.database import models as m
 from core.candidates.resume_parser import ResumeParseError
 

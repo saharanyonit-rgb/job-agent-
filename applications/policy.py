@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from core.database import models as m
-from core.core.config import get_settings
+from core.config import get_settings
 
 MODES = ["DISCOVERY_ONLY", "PREPARE_AND_APPROVE", "AUTONOMOUS"]
 

@@ -21,7 +21,7 @@ from core.candidates.resume_parser import (
 )
 from core.candidates.skills import CandidateSkillService
 from core.database import models as m
-from core.core.config import get_settings
+from core.config import get_settings
 
 FACT_KEYS = [
     "name", "email", "phone", "location", "work_authorization", "visa_status",

@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from core.database import models as m
-from core.core.config import get_settings
+from core.config import get_settings
 
 TERMINAL = {"REJECTED", "OFFER", "ACCEPTED", "WITHDRAWN", "EXPIRED"}
 PROGRESSED = {

@@ -6,8 +6,8 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from core.applications.policy import PolicyService
-from core.core.config import get_settings
-from core.core.logging_config import get_logger
+from core.config import get_settings
+from core.logging_config import get_logger
 from core.database import models as m
 
 log = get_logger(__name__)
@@ -71,7 +71,7 @@ def schedule(
     import threading
     import time
 
-    from core.core.config import get_settings
+    from core.config import get_settings
 
     scheduler = SchedulerService(orchestrator.db)
 

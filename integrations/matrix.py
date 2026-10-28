@@ -49,7 +49,7 @@ def provider_status():
     AI:          rule_based is always available; real providers marked by key.
     """
     import core.email_service.adapters as email_adapters
-    from core.core.config import get_settings
+    from core.config import get_settings
     from core.email_service.gmail import GmailAdapter, GmailTokenStore
 
     report = {k: dict(v) for k, v in INTEGRATIONS.items()}

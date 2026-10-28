@@ -19,8 +19,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from core.core.config import get_settings
-from core.core.logging_config import get_logger
+from core.config import get_settings
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 
@@ -233,13 +233,25 @@ def _import_resume(db, path: Path, candidate_id: int) -> dict[str, Any]:
 
     email = _fact("email") or (re.search(r"[\w.+-]+@[\w-]+\.[\w.]+", text) or [None])[0]
     phone = _fact("phone") or (re.search(r"\+?\d[\d\s-]{9,14}", text) or [None])[0]
+    if isinstance(phone, str):
+        phone = phone.strip()
     first_line = next((ln.strip() for ln in text.splitlines() if ln.strip()), "")
     name = _fact("name") or first_line
     location = _fact("location")
     if location is None:
-        for ln in text.splitlines():
-            s = ln.strip()
-            if s and "email" not in s.lower() and "linkedin" not in s.lower() and not s.startswith("http") and ("india" in s.lower() or "," in s):
+        # Only look at the short header block (first few lines) so prose from the
+        # summary/experience sections can't be mistaken for a location line.
+        header = [ln.strip() for ln in text.splitlines()[:8] if ln.strip()]
+        for s in header[1:]:
+            low = s.lower()
+            if "@" in s or "http" in low or "phone" in low or "email" in low:
+                continue
+            if len(s) > 60:
+                continue
+            has_comma = "," in s
+            placey = any(w in low for w in ("india", "usa", "us", "netherlands", ", "))
+            digits = sum(ch.isdigit() for ch in s)
+            if placey and digits < len(s) // 3:
                 location = s
                 break
 

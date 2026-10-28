@@ -12,9 +12,9 @@ from core.discovery.service import DiscoveryService
 from core.jobs.service import JobService
 from core.matching.engine import MatchingEngine
 from core.applications.service import ApplicationService
-from core.core.observability import ObservabilityService, runtime_status
-from core.core.logging_config import get_logger
-from core.core.errors import HandoffRequiredError
+from core.observability import ObservabilityService, runtime_status
+from core.logging_config import get_logger
+from core.errors import HandoffRequiredError
 
 log = get_logger(__name__)
 

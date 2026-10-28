@@ -3,7 +3,7 @@ from __future__ import annotations
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from core.core.config import get_settings
+from core.config import get_settings
 
 router = APIRouter(prefix="/api/oauth", tags=["oauth"])
 
