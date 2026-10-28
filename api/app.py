@@ -5,9 +5,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from job_agent.core.config import get_settings
-from job_agent.core.logging_config import setup_logging
-from job_agent.database.base import init_db
+from core.config import get_settings
+from core.logging_config import setup_logging
+from core.database.base import init_db
 
 
 @asynccontextmanager
@@ -26,7 +26,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    from job_agent.api.routes import (
+    from core.api.routes import (
         applications,
         audit,
         backup,

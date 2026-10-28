@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from job_agent.ai.provider import LLMProvider
+from core.ai.provider import LLMProvider
 
 _SKILL_TOKENS = [
     "python", "java", "javascript", "typescript", "c#", "csharp", ".net", "go", "rust",

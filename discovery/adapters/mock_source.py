@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from job_agent.discovery.base import DiscoveryResult, IntegrationStatus, SourceAdapter
-from job_agent.jobs.normalize import RawJob
+from core.discovery.base import DiscoveryResult, IntegrationStatus, SourceAdapter
+from core.jobs.normalize import RawJob
 
 # Deterministic demo/mock feed so the pipeline always has jobs to process.
 _MOCK_JOBS: list[dict[str, Any]] = [

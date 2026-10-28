@@ -3,10 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from job_agent.browser.detectors import FormDetector, FormSpec
-from job_agent.browser.manager import FormBackend, HttpFormBackend, NavigationResult
-from job_agent.browser.mapper import FormMapper, MappingResult
-from job_agent.core.logging_config import get_logger
+from core.browser.detectors import FormDetector, FormSpec
+from core.browser.manager import FormBackend, HttpFormBackend, NavigationResult
+from core.browser.mapper import FormMapper, MappingResult
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 
@@ -59,7 +59,7 @@ class ApplicationSubmitter:
         use_http = isinstance(self.backend, HttpFormBackend) or self.backend_kind == "http"
 
         if not use_http:
-            from job_agent.browser.manager import InteractiveSubmitter
+            from core.browser.manager import InteractiveSubmitter
 
             result = InteractiveSubmitter().submit(application_url, facts, files, max_pages=self.max_pages)
             detection = result.page_detection

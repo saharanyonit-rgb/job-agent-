@@ -5,7 +5,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from job_agent.applications.pipeline import (
+from core.applications.pipeline import (
     ACKNOWLEDGED_LABELS,
     FREEZE_LABELS,
     OFFER_LABELS,
@@ -13,9 +13,9 @@ from job_agent.applications.pipeline import (
     RESPONSE_LABELS,
     ApplicationPipeline,
 )
-from job_agent.database import models as m
-from job_agent.core.config import get_settings
-from job_agent.email_service.linking import EvidenceLinker, LINK_NO_EVIDENCE, LINK_AMBIGUOUS, LinkDecision
+from core.database import models as m
+from core.config import get_settings
+from core.email_service.linking import EvidenceLinker, LINK_NO_EVIDENCE, LINK_AMBIGUOUS, LinkDecision
 
 
 class EmailOutcomeService:

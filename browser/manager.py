@@ -4,9 +4,9 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 import httpx
-from job_agent.browser.detectors import PageDetector
-from job_agent.core.config import get_settings
-from job_agent.core.logging_config import get_logger
+from core.browser.detectors import PageDetector
+from core.config import get_settings
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 

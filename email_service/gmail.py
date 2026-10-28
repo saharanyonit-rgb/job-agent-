@@ -11,9 +11,9 @@ from typing import Any
 
 import httpx
 
-from job_agent.core.config import get_settings
-from job_agent.email_service.adapters import EmailAdapter
-from job_agent.email_service.classifier import RawEmail
+from core.config import get_settings
+from core.email_service.adapters import EmailAdapter
+from core.email_service.classifier import RawEmail
 
 GMAIL_SCOPE = (
     "https://www.googleapis.com/auth/gmail.readonly "
@@ -277,7 +277,7 @@ class GmailAdapter(EmailAdapter):
 
 def register_gmail_adapter(credentials: dict[str, Any], *, http: httpx.Client | None = None) -> GmailAdapter:
     """Build a GmailAdapter from stored/exchanged credentials and register it."""
-    from job_agent.email_service.adapters import adapters
+    from core.email_service.adapters import adapters
 
     adapter = GmailAdapter(credentials, http=http)
     adapter.integration_status = "VALIDATED" if adapter.health().get("status") == "VALIDATED" else "CONFIGURED"

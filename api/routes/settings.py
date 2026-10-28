@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from job_agent.api.deps import JobAgentOrchestrator, get_db
-from job_agent.applications.policy import ApplicationPolicy, PolicyService, MODES
+from core.api.deps import JobAgentOrchestrator, get_db
+from core.applications.policy import ApplicationPolicy, PolicyService, MODES
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -44,9 +44,9 @@ def update_policy(body: PolicyIn, db: Session = Depends(get_db)) -> dict:
 
 @router.get("/sources")
 def get_statuses(db: Session = Depends(get_db)) -> dict:
-    from job_agent.discovery.base import register_default_adapters
+    from core.discovery.base import register_default_adapters
 
     register_default_adapters()
-    from job_agent.discovery.base import registry
+    from core.discovery.base import registry
 
     return {"sources": registry.statuses()}

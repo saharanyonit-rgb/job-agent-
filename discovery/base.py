@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from job_agent.jobs.normalize import RawJob
+from core.jobs.normalize import RawJob
 
 
 class IntegrationStatus(str, Enum):
@@ -76,29 +76,51 @@ class AdapterRegistry:
 registry = AdapterRegistry()
 
 
-def register_default_adapters() -> AdapterRegistry:
-    from job_agent.discovery.adapters.company_career import CompanyCareerAdapter
-    from job_agent.discovery.adapters.greenhouse import GreenhouseAdapter
-    from job_agent.discovery.adapters.lever import LeverAdapter
-    from job_agent.discovery.adapters.linkedin import LinkedInAdapter
-    from job_agent.discovery.adapters.indeed import IndeedAdapter, JSearchAdapter
-    from job_agent.discovery.adapters.mock_source import MockSourceAdapter
-    from job_agent.discovery.adapters.ats import MockATSAdapter
+def _real_sources_only() -> bool:
+    """True when fake/demo job sources must be excluded (default)."""
+    import os
 
-    if not registry.get(MockSourceAdapter.name):
-        registry.register(MockSourceAdapter())
+    return os.getenv("ALLOW_FAKE_JOBS", "").strip().lower() not in ("1", "true", "yes")
+
+
+def register_default_adapters() -> AdapterRegistry:
+    from core.discovery.adapters.company_career import CompanyCareerAdapter
+    from core.discovery.adapters.greenhouse import GreenhouseAdapter
+    from core.discovery.adapters.job_boards import RemoteJobBoardAdapter
+    from core.discovery.adapters.lever import LeverAdapter
+    from core.discovery.adapters.linkedin import LinkedInAdapter, LinkedInGuestAdapter
+    from core.discovery.adapters.indeed import IndeedAdapter, JSearchAdapter
+
     if not registry.get(GreenhouseAdapter.name):
         registry.register(GreenhouseAdapter())
     if not registry.get(LeverAdapter.name):
         registry.register(LeverAdapter())
+    if not registry.get(RemoteJobBoardAdapter.name):
+        registry.register(RemoteJobBoardAdapter())
     if not registry.get(CompanyCareerAdapter.name):
         registry.register(CompanyCareerAdapter())
-    if not registry.get(MockATSAdapter.name):
-        registry.register(MockATSAdapter())
     if not registry.get(LinkedInAdapter.name):
         registry.register(LinkedInAdapter())
+    if not registry.get(LinkedInGuestAdapter.name):
+        registry.register(LinkedInGuestAdapter())
     if not registry.get(IndeedAdapter.name):
         registry.register(IndeedAdapter())
     if not registry.get(JSearchAdapter.name):
         registry.register(JSearchAdapter())
+
+    # Fake/demo sources are opt-in only (ALLOW_FAKE_JOBS=1); by default the
+    # agent discovers REAL jobs and never injects fabricated listings.
+    if not _real_sources_only():
+        from core.discovery.adapters.mock_source import MockSourceAdapter
+        from core.discovery.adapters.ats import MockATSAdapter
+
+        if not registry.get(MockSourceAdapter.name):
+            registry.register(MockSourceAdapter())
+        if not registry.get(MockATSAdapter.name):
+            registry.register(MockATSAdapter())
+    else:
+        for fake_name in ("mock_feed", "mock_ats"):
+            adapter = registry.get(fake_name)
+            if adapter is not None:
+                adapter.enabled = False
     return registry

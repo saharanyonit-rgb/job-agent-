@@ -4,15 +4,15 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from job_agent.core.observability import ObservabilityService
-from job_agent.email_service.classifier import EmailClassifier
-from job_agent.interviews.service import InterviewService
-from job_agent.interviews.preparation import InterviewPreparationAgent
-from job_agent.candidates.service import CandidateService
-from job_agent.database import models as m
-from job_agent.calendar_service.service import CalendarService
-from job_agent.notifications.engine import NotificationEngine
-from job_agent.core.logging_config import get_logger
+from core.observability import ObservabilityService
+from core.email_service.classifier import EmailClassifier
+from core.interviews.service import InterviewService
+from core.interviews.preparation import InterviewPreparationAgent
+from core.candidates.service import CandidateService
+from core.database import models as m
+from core.calendar_service.service import CalendarService
+from core.notifications.engine import NotificationEngine
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 
@@ -30,7 +30,7 @@ class DiscreteAgents:
         self.prep = InterviewPreparationAgent()
 
     def monitor_email(self, adapter: str = "mock") -> list[dict[str, Any]]:
-        from job_agent.email_service.service import EmailService
+        from core.email_service.service import EmailService
 
         service = EmailService(self.db, adapter_name=adapter)
         processed = service.process_inbox()

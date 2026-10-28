@@ -7,10 +7,10 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from job_agent.api.deps import CandidateService, get_db
-from job_agent.core.config import get_settings
-from job_agent.database import models as m
-from job_agent.candidates.resume_parser import ResumeParseError
+from core.api.deps import CandidateService, get_db
+from core.config import get_settings
+from core.database import models as m
+from core.candidates.resume_parser import ResumeParseError
 
 router = APIRouter(prefix="/api/candidates", tags=["candidates"])
 

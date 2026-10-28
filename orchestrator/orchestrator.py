@@ -5,16 +5,16 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from job_agent.candidates.models import CandidateFactCollection
-from job_agent.candidates.service import CandidateService
-from job_agent.database import models as m
-from job_agent.discovery.service import DiscoveryService
-from job_agent.jobs.service import JobService
-from job_agent.matching.engine import MatchingEngine
-from job_agent.applications.service import ApplicationService
-from job_agent.core.observability import ObservabilityService, runtime_status
-from job_agent.core.logging_config import get_logger
-from job_agent.core.errors import HandoffRequiredError
+from core.candidates.models import CandidateFactCollection
+from core.candidates.service import CandidateService
+from core.database import models as m
+from core.discovery.service import DiscoveryService
+from core.jobs.service import JobService
+from core.matching.engine import MatchingEngine
+from core.applications.service import ApplicationService
+from core.observability import ObservabilityService, runtime_status
+from core.logging_config import get_logger
+from core.errors import HandoffRequiredError
 
 log = get_logger(__name__)
 
@@ -79,9 +79,9 @@ class JobAgentOrchestrator:
         return outcome
 
     def prepare_documents(self, app: m.Application, facts: CandidateFactCollection, ai: Any = None) -> dict[str, Any]:
-        from job_agent.documents.generator import DocumentGenerator
+        from core.documents.generator import DocumentGenerator
 
-        from job_agent.ai.service import chain
+        from core.ai.service import chain
 
         gen = DocumentGenerator(ai=ai or chain)
         job = self.db.get(m.Job, app.job_id)
@@ -108,9 +108,9 @@ class JobAgentOrchestrator:
     def prepare_and_submit_applications(self, candidate_id: int, dry_run: bool = False) -> dict[str, Any]:
         """Match, prepare documents, validate, and submit per policy. This is the
         vertical slice behind AU'TONOMOUS and PREPARE_AND_APPROVE modes."""
-        from job_agent.browser.manager import HttpFormBackend
-        from job_agent.browser.service import ApplicationSubmitter
-        from job_agent.browser.mapper import SENSITIVE_FIELDS
+        from core.browser.manager import HttpFormBackend
+        from core.browser.service import ApplicationSubmitter
+        from core.browser.mapper import SENSITIVE_FIELDS
 
         self.match_all(candidate_id)
         facts = self.candidates.get_facts(candidate_id)
@@ -282,6 +282,6 @@ class JobAgentOrchestrator:
     def run_daily_career_loop(self, candidate_id: int, dry_run: bool = False) -> dict[str, Any]:
         """Phase 14: the full closed loop with outcome analysis, skill gaps,
         career plan and a persisted daily report."""
-        from job_agent.career.daily import DailyCareerLoop
+        from core.career.daily import DailyCareerLoop
 
         return DailyCareerLoop(self.db, orchestrator=self).run(candidate_id, dry_run=dry_run)

@@ -3,8 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from job_agent.database import models as m
-from job_agent.api.deps import get_db
+from core.database import models as m
+from core.api.deps import get_db
 
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 

@@ -6,11 +6,11 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from job_agent.database import models as m
-from job_agent.discovery.base import DiscoveryResult, SourceAdapter, registry, register_default_adapters
-from job_agent.jobs.service import JobService
-from job_agent.core.errors import CircuitBreaker
-from job_agent.core.logging_config import get_logger
+from core.database import models as m
+from core.discovery.base import DiscoveryResult, SourceAdapter, registry, register_default_adapters
+from core.jobs.service import JobService
+from core.errors import CircuitBreaker
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 

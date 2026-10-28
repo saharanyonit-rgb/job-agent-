@@ -6,8 +6,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from job_agent.database import models as m
-from job_agent.core.config import get_settings
+from core.database import models as m
+from core.config import get_settings
 
 MODES = ["DISCOVERY_ONLY", "PREPARE_AND_APPROVE", "AUTONOMOUS"]
 
@@ -112,7 +112,7 @@ class PolicyService:
         the configured window (current application excluded). Over the limit ->
         HANDOFF_REQUIRED. Do NOT merely log.
         """
-        from job_agent.applications.budget import LowConfidenceBudget
+        from core.applications.budget import LowConfidenceBudget
 
         policy = self.get()
         budget = LowConfidenceBudget(self.db)
@@ -254,7 +254,7 @@ class PolicyService:
         )
 
     def _low_confidence_count(self, candidate_id: int, exclude_application_id: int | None) -> int:
-        from job_agent.applications.budget import LowConfidenceBudget
+        from core.applications.budget import LowConfidenceBudget
 
         policy = self.get()
         return LowConfidenceBudget(self.db).count(

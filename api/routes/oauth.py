@@ -3,7 +3,7 @@ from __future__ import annotations
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from job_agent.core.config import get_settings
+from core.config import get_settings
 
 router = APIRouter(prefix="/api/oauth", tags=["oauth"])
 
@@ -18,7 +18,7 @@ def google_start() -> dict:
     settings = get_settings()
     if not settings.google_client_id:
         raise HTTPException(400, "GOOGLE_CLIENT_ID not configured")
-    from job_agent.email_service.gmail import build_authorization_url
+    from core.email_service.gmail import build_authorization_url
 
     url = build_authorization_url(
         client_id=settings.google_client_id,
@@ -35,7 +35,7 @@ def google_callback(code: str = Query("")) -> dict:
     if not code:
         raise HTTPException(400, "missing authorization code")
 
-    from job_agent.email_service.gmail import exchange_code, register_gmail_adapter
+    from core.email_service.gmail import exchange_code, register_gmail_adapter
 
     try:
         credentials = exchange_code(
@@ -56,13 +56,13 @@ def google_callback(code: str = Query("")) -> dict:
 
 @router.get("/google/status")
 def google_status() -> dict:
-    from job_agent.email_service.gmail import GmailTokenStore
+    from core.email_service.gmail import GmailTokenStore
 
     store = GmailTokenStore()
     creds = store.load()
     if not creds:
         return {"status": "NOT_CONNECTED"}
-    from job_agent.email_service.gmail import GmailAdapter
+    from core.email_service.gmail import GmailAdapter
 
     adapter = GmailAdapter(creds)
     return {"status": adapter.health()}

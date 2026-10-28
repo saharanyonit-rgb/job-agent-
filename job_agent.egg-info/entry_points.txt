@@ -1,0 +1,2 @@
+[console_scripts]
+job-agent = core.__main__:main

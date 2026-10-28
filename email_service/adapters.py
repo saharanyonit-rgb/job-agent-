@@ -4,7 +4,7 @@ import abc
 from dataclasses import dataclass, field
 from typing import Any
 
-from job_agent.email_service.classifier import RawEmail
+from core.email_service.classifier import RawEmail
 
 
 class EmailAdapter(abc.ABC):
@@ -66,11 +66,11 @@ class MockEmailAdapter(EmailAdapter):
 
 
 class GmailAdapter(EmailAdapter):
-    """Google Mail OAuth adapter (Gmail API v1), implemented in job_agent.email_service.gmail.
+    """Google Mail OAuth adapter (Gmail API v1), implemented in core.email_service.gmail.
 
     Real implementation performs token storage, refresh, fetch/send/mark-read via
     the Gmail API using httpx (no google SDK needed). This placeholder is kept so
-    imports referencing `job_agent.email_service.adapters.GmailAdapter` keep working.
+    imports referencing `core.email_service.adapters.GmailAdapter` keep working.
     """
     name = "gmail"
     integration_status = "UNVALIDATED"
@@ -79,13 +79,13 @@ class GmailAdapter(EmailAdapter):
         self.access_token = access_token
 
     def fetch_unread(self) -> list[Any]:
-        raise NotImplementedError("use job_agent.email_service.gmail.GmailAdapter for the real adapter")
+        raise NotImplementedError("use core.email_service.gmail.GmailAdapter for the real adapter")
 
     def send(self, to: str, subject: str, body: str) -> dict[str, Any]:
-        raise NotImplementedError("use job_agent.email_service.gmail.GmailAdapter for the real adapter")
+        raise NotImplementedError("use core.email_service.gmail.GmailAdapter for the real adapter")
 
     def mark_processed(self, email_id: str) -> None:
-        raise NotImplementedError("use job_agent.email_service.gmail.GmailAdapter for the real adapter")
+        raise NotImplementedError("use core.email_service.gmail.GmailAdapter for the real adapter")
 
 
 class OutlookAdapter(EmailAdapter):
@@ -109,7 +109,7 @@ def get_email_adapter(name: str | None = None) -> EmailAdapter:
     name = name or "mock"
     if name not in adapters:
         if name == "gmail":
-            from job_agent.email_service.gmail import GmailAdapter
+            from core.email_service.gmail import GmailAdapter
 
             adapters[name] = GmailAdapter()
         elif name == "outlook":

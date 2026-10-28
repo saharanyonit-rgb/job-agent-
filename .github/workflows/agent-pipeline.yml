@@ -1,0 +1,46 @@
+name: Job Agent Pipeline
+
+# Runs the full discovery → verification → matching cycle on a schedule.
+# Real jobs only: fake sources (mock_ats / mock_feed) stay disabled unless
+# explicitly re-enabled via env flags.
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # daily 09:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  discover-and-match:
+    runs-on: ubuntu-latest
+    env:
+      APP_MODE: COPILOT            # never auto-submit without review
+      MINIMUM_MATCH: "60"
+      GREENHOUSE_TOKENS: ${{ vars.GREENHOUSE_TOKENS }}
+      LINKEDIN_COOKIES: ${{ secrets.LINKEDIN_COOKIES }}
+      INDEED_COOKIES: ${{ secrets.INDEED_COOKIES }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e . || true
+
+      - name: Run discovery + matching (real sources only)
+        run: python -m core run
+
+      - name: Upload database snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: job-agent-db
+          path: storage/*.db
+          if-no-files-found: ignore

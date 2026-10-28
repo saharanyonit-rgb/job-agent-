@@ -6,11 +6,11 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from job_agent.analytics.outcomes import OutcomeAnalyzer
-from job_agent.career.plan import CareerPlanService
-from job_agent.candidates.profile import CandidateProfileService
-from job_agent.core.observability import ObservabilityService, runtime_status
-from job_agent.database import models as m
+from core.analytics.outcomes import OutcomeAnalyzer
+from core.career.plan import CareerPlanService
+from core.candidates.profile import CandidateProfileService
+from core.observability import ObservabilityService, runtime_status
+from core.database import models as m
 
 
 class DailyCareerLoop:
@@ -65,7 +65,7 @@ class DailyCareerLoop:
             except Exception as exc:  # one failing source never blocks the loop
                 results[task] = {"error": str(exc)}
                 self.obs.record_error("daily_loop", task, str(exc))
-        from job_agent.email_service.outcomes import EmailOutcomeService
+        from core.email_service.outcomes import EmailOutcomeService
 
         try:
             results["email_outcomes"] = EmailOutcomeService(self.db).process_latest()
@@ -87,7 +87,7 @@ class DailyCareerLoop:
             if interview.application_id:
                 app = self.db.get(m.Application, interview.application_id)
                 if app and app.status not in ("INTERVIEW_REQUESTED", "INTERVIEW_SCHEDULED"):
-                    from job_agent.applications.pipeline import ApplicationPipeline
+                    from core.applications.pipeline import ApplicationPipeline
 
                     try:
                         ApplicationPipeline(self.db).transition(app, "INTERVIEW_REQUESTED", source="interview", confidence=0.9)
@@ -97,7 +97,7 @@ class DailyCareerLoop:
         return count
 
     def _gaps(self, candidate_id: int) -> list[dict[str, Any]]:
-        from job_agent.analytics.learning import SkillGapAnalyzer
+        from core.analytics.learning import SkillGapAnalyzer
 
         return SkillGapAnalyzer(self.db).analyze(candidate_id)
 
@@ -193,7 +193,7 @@ class DailyCareerLoop:
         return "Maintain current pipeline; prepare for scheduled interviews."
 
     def _write_evidence(self, candidate_id: int, report: dict[str, Any]) -> None:
-        from job_agent.evidence.registry import EvidenceRegistry
+        from core.evidence.registry import EvidenceRegistry
 
         registry = EvidenceRegistry(self.db)
         registry.add(

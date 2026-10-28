@@ -5,12 +5,12 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from job_agent.analytics.outcomes import OutcomeAnalyzer
-from job_agent.applications.pipeline import VALID_TRANSITIONS
-from job_agent.career.plan import CareerPlanService
-from job_agent.candidates.profile import CandidateProfileService
-from job_agent.candidates.skills import SKILL_LIFECYCLE
-from job_agent.database import models as m
+from core.analytics.outcomes import OutcomeAnalyzer
+from core.applications.pipeline import VALID_TRANSITIONS
+from core.career.plan import CareerPlanService
+from core.candidates.profile import CandidateProfileService
+from core.candidates.skills import SKILL_LIFECYCLE
+from core.database import models as m
 
 _QUESTION_CATALOG: list[dict[str, Any]] = [
     {"question_id": "what_should_i_do_today", "prompt": "What should I do today?", "fallback": False},

@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from job_agent.ai.service import chain
+from core.ai.service import chain
 
 EMAIL_CLASSES = [
     "APPLICATION_RECEIVED",

@@ -7,8 +7,8 @@ from typing import Any
 import httpx
 from bs4 import BeautifulSoup
 
-from job_agent.discovery.base import DiscoveryResult, IntegrationStatus, SourceAdapter
-from job_agent.jobs.normalize import RawJob
+from core.discovery.base import DiscoveryResult, IntegrationStatus, SourceAdapter
+from core.jobs.normalize import RawJob
 
 
 class LinkedInAdapter(SourceAdapter):
@@ -115,7 +115,10 @@ class LinkedInGuestAdapter(SourceAdapter):
     integration_status = IntegrationStatus.UNVALIDATED
 
     def discover_jobs(self, query: dict[str, Any] | None = None) -> DiscoveryResult:
-        return DiscoveryResult(jobs=[], source=self.name, status=IntegrationStatus.UNAVAILABLE, error="not implemented")
+        return DiscoveryResult(
+            jobs=[], source=self.name, status=IntegrationStatus.UNAVAILABLE,
+            error="linkedin_guest adapter not implemented; enable ALLOW_FAKE_JOBS or use 'linkedin'",
+        )
 
     def get_job(self, job_ref: str) -> RawJob | None:
         return None

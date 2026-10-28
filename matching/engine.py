@@ -4,9 +4,9 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-from job_agent.ai.service import chain
-from job_agent.candidates.models import CandidateFactCollection
-from job_agent.database import models as m
+from core.ai.service import chain
+from core.candidates.models import CandidateFactCollection
+from core.database import models as m
 
 SENIORITY_KEYWORDS = ["junior", "mid", "senior", "lead", "principal", "staff", "architect", "manager", "director", "vp"]
 

@@ -8,20 +8,20 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from job_agent.candidates.models import (
+from core.candidates.models import (
     CandidateFactCollection,
     ProvenanceFact,
 )
-from job_agent.candidates.resume_parser import (
+from core.candidates.resume_parser import (
     ResumeParseError,
     ResumeParsed,
     ResumeText,
     ResumeParser,
     extract_text,
 )
-from job_agent.candidates.skills import CandidateSkillService
-from job_agent.database import models as m
-from job_agent.core.config import get_settings
+from core.candidates.skills import CandidateSkillService
+from core.database import models as m
+from core.config import get_settings
 
 FACT_KEYS = [
     "name", "email", "phone", "location", "work_authorization", "visa_status",

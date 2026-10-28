@@ -1,0 +1,15 @@
+ASHA PATEL
+Technical Architect | Bengaluru, India | asha.patel@example.com
+
+SUMMARY
+10 years experience designing distributed systems, Python backend services and cloud infrastructure.
+
+SKILLS
+Python, FastAPI, PostgreSQL, SQLAlchemy, Docker, Kubernetes, AWS, REST APIs, System Design, Machine Learning
+
+EXPERIENCE
+Senior Technical Architect - Acme Corp (2018-2026)
+Led platform team; built job-discovery data pipelines; reduced infra costs 40%.
+
+EDUCATION
+B.Tech Computer Science

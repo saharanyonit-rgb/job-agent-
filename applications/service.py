@@ -6,15 +6,15 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from job_agent.applications.pipeline import ApplicationPipeline, InvalidTransition
-from job_agent.applications.policy import PolicyService
-from job_agent.applications.strategy import ApplicationStrategyEngine
-from job_agent.applications.validation import validate_application
-from job_agent.candidates.profile import CandidateProfileService
-from job_agent.candidates.service import CandidateService
-from job_agent.database import models as m
-from job_agent.matching.engine import MatchingEngine
-from job_agent.core.logging_config import get_logger
+from core.applications.pipeline import ApplicationPipeline, InvalidTransition
+from core.applications.policy import PolicyService
+from core.applications.strategy import ApplicationStrategyEngine
+from core.applications.validation import validate_application
+from core.candidates.profile import CandidateProfileService
+from core.candidates.service import CandidateService
+from core.database import models as m
+from core.matching.engine import MatchingEngine
+from core.logging_config import get_logger
 
 log = get_logger(__name__)
 

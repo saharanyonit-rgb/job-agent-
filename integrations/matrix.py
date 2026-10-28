@@ -3,8 +3,8 @@ until it has been exercised against a live endpoint in tests."""
 
 INTEGRATIONS = {
     "job_sources": {
-        "mock_feed": {"status": "VALIDATED", "note": "bundled deterministic feed"},
-        "mock_ats": {"status": "VALIDATED", "note": "tested against bundled Mock ATS"},
+        "mock_feed": {"status": "DISABLED_BY_DEFAULT", "note": "fake demo feed; opt in with ALLOW_FAKE_JOBS=1 or --use-fake-sources"},
+        "mock_ats": {"status": "DISABLED_BY_DEFAULT", "note": "fake demo ATS; opt in with ALLOW_FAKE_JOBS=1 or --use-fake-sources"},
         "company_career": {"status": "PARTIAL", "note": "generic HTML listing crawler; validate per site"},
         "greenhouse": {"status": "UNVALIDATED", "note": "public boards API implemented; needs live board"},
         "lever": {"status": "UNVALIDATED", "note": "public postings API implemented; needs live org"},
@@ -48,9 +48,9 @@ def provider_status():
     Emails:      mock is always VALIDATED; gmail reflects token+health state.
     AI:          rule_based is always available; real providers marked by key.
     """
-    import job_agent.email_service.adapters as email_adapters
-    from job_agent.core.config import get_settings
-    from job_agent.email_service.gmail import GmailAdapter, GmailTokenStore
+    import core.email_service.adapters as email_adapters
+    from core.config import get_settings
+    from core.email_service.gmail import GmailAdapter, GmailTokenStore
 
     report = {k: dict(v) for k, v in INTEGRATIONS.items()}
 

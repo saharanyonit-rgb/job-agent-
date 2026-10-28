@@ -5,9 +5,9 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from job_agent.database import models as m
-from job_agent.email_service.adapters import get_email_adapter
-from job_agent.email_service.classifier import EmailClassifier, InterviewExtractor, RawEmail
+from core.database import models as m
+from core.email_service.adapters import get_email_adapter
+from core.email_service.classifier import EmailClassifier, InterviewExtractor, RawEmail
 
 
 class EmailService:
