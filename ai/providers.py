@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 
-from job_agent.ai.provider import LLMProvider, parse_json_strict
+from core.ai.provider import LLMProvider, parse_json_strict
 
 
 class OpenAIProvider(LLMProvider):

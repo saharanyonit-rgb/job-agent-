@@ -9,8 +9,8 @@ from typing import Any
 import httpx
 from bs4 import BeautifulSoup
 
-from job_agent.discovery.base import DiscoveryResult, IntegrationStatus, SourceAdapter
-from job_agent.jobs.normalize import RawJob, extract_years, parse_salary
+from core.discovery.base import DiscoveryResult, IntegrationStatus, SourceAdapter
+from core.jobs.normalize import RawJob, extract_years, parse_salary
 
 
 @dataclass

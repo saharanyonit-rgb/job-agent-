@@ -16,7 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from job_agent.database.base import Base
+from core.database.base import Base
 
 
 class Candidate(Base):

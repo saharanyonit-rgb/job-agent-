@@ -5,10 +5,10 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from job_agent.applications.policy import PolicyService
-from job_agent.core.config import get_settings
-from job_agent.core.logging_config import get_logger
-from job_agent.database import models as m
+from core.applications.policy import PolicyService
+from core.core.config import get_settings
+from core.core.logging_config import get_logger
+from core.database import models as m
 
 log = get_logger(__name__)
 
@@ -40,7 +40,7 @@ class SchedulerService:
             self._last_verify = now
 
         # Follow-ups processed daily
-        from job_agent.followups.engine import FollowupEngine
+        from core.followups.engine import FollowupEngine
 
         if due(self._last_followup, settings.followup_interval_minutes):
             engine = FollowupEngine(self.db)
@@ -71,7 +71,7 @@ def schedule(
     import threading
     import time
 
-    from job_agent.core.config import get_settings
+    from core.core.config import get_settings
 
     scheduler = SchedulerService(orchestrator.db)
 

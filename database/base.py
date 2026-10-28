@@ -7,7 +7,7 @@ from typing import Iterator
 from sqlalchemy import create_engine, inspect as sa_inspect, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-from job_agent.core.config import get_settings
+from core.core.config import get_settings
 
 
 class Base(DeclarativeBase):
@@ -53,7 +53,7 @@ def _add_missing_columns(engine) -> None:
     server default) so pre-existing rows stay valid. Runs after create_all so
     new tables are created up front and only older tables get ALTER'd.
     """
-    import job_agent.database.models as md
+    import core.database.models as md
 
     insp = sa_inspect(engine)
     for table in md.Base.metadata.sorted_tables:
@@ -74,7 +74,7 @@ def _add_missing_columns(engine) -> None:
 
 
 def init_db(reset: bool = False) -> None:
-    import job_agent.database.models  # noqa: F401
+    import core.database.models  # noqa: F401
 
     if reset:
         Base.metadata.drop_all(engine)

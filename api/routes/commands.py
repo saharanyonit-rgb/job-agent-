@@ -4,8 +4,8 @@ import re
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from job_agent.api.deps import DiscreteAgents, JobAgentOrchestrator, get_db
-from job_agent.database import models as m
+from core.api.deps import DiscreteAgents, JobAgentOrchestrator, get_db
+from core.database import models as m
 
 router = APIRouter(prefix="/api/commands", tags=["commands"])
 
@@ -92,7 +92,7 @@ class CommandHandler:
             handoffs = self.db.query(m.Application).filter(m.Application.status == "HANDOFF_REQUIRED").all()
             return {"intent": intent, "response": [{"id": a.id, "job_id": a.job_id, "reason": a.handoff_reason} for a in handoffs]}
         if intent == "followup":
-            from job_agent.followups.engine import FollowupEngine
+            from core.followups.engine import FollowupEngine
 
             engine = FollowupEngine(self.db)
             plans = engine.plan_pending()
@@ -112,7 +112,7 @@ class CommandHandler:
         return {"intent": intent, "response": "Command not fully handled."}
 
     def _daily_report(self) -> dict:
-        from job_agent.core.observability import ObservabilityService
+        from core.core.observability import ObservabilityService
 
         obs = ObservabilityService(self.db)
         dash = self.db

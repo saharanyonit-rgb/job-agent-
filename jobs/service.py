@@ -6,11 +6,11 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from job_agent.database import models as m
-from job_agent.jobs.dedupe import find_duplicate_groups, merge_duplicates
-from job_agent.jobs.normalize import NormalizedJob, normalize_job, RawJob
-from job_agent.jobs.verify import JobVerifier, VerificationResult
-from job_agent.core.logging_config import get_logger
+from core.database import models as m
+from core.jobs.dedupe import find_duplicate_groups, merge_duplicates
+from core.jobs.normalize import NormalizedJob, normalize_job, RawJob
+from core.jobs.verify import JobVerifier, VerificationResult
+from core.core.logging_config import get_logger
 
 log = get_logger(__name__)
 

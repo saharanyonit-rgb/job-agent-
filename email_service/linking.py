@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from job_agent.database import models as m
+from core.database import models as m
 
 LINK_STRONG = "STRONG"
 LINK_MEDIUM = "MEDIUM"

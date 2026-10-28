@@ -8,15 +8,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from job_agent.ai.service import chain
-from job_agent.analytics.outcomes import OutcomeAnalyzer
-from job_agent.career.agent import CareerAgent
-from job_agent.career.daily import DailyCareerLoop
-from job_agent.career.plan import CareerPlanService
-from job_agent.candidates.profile import CandidateProfileService
-from job_agent.candidates.skills import CandidateSkillService
-from job_agent.api.deps import get_db
-from job_agent.database import models as m
+from core.ai.service import chain
+from core.analytics.outcomes import OutcomeAnalyzer
+from core.career.agent import CareerAgent
+from core.career.daily import DailyCareerLoop
+from core.career.plan import CareerPlanService
+from core.candidates.profile import CandidateProfileService
+from core.candidates.skills import CandidateSkillService
+from core.api.deps import get_db
+from core.database import models as m
 
 router = APIRouter(prefix="/api/career", tags=["career"])
 
@@ -153,7 +153,7 @@ def ask(payload: AskRequest, db: Session = Depends(get_db)) -> dict:
 
 @router.post("/run-loop")
 def run_daily_loop(payload: RunLoopRequest, db: Session = Depends(get_db)) -> dict:
-    from job_agent.api.deps import JobAgentOrchestrator
+    from core.api.deps import JobAgentOrchestrator
 
     return JobAgentOrchestrator(db).run_daily_career_loop(DEFAULT_CANDIDATE_ID, dry_run=payload.dry_run)
 
@@ -174,7 +174,7 @@ def analytics(db: Session = Depends(get_db)) -> dict:
 
 @router.post("/interviews/{interview_id}/outcome")
 def interview_outcome(interview_id: int, payload: InterviewOutcomeRequest, db: Session = Depends(get_db)) -> dict:
-    from job_agent.interviews.service import InterviewService
+    from core.interviews.service import InterviewService
 
     interview = db.get(m.Interview, interview_id)
     if interview is None:
@@ -289,7 +289,7 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)) -> ChatResponse:
     candidate = db.query(m.Candidate).order_by(m.Candidate.id).limit(1).first()
     if not candidate:
         return ChatResponse(
-            response="I don't see a candidate profile yet. Please run `python -m job_agent seed` or import your resume first.",
+            response="I don't see a candidate profile yet. Please run `python -m core seed` or import your resume first.",
             conversation_id=conv_id,
         )
     

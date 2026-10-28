@@ -6,7 +6,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from job_agent.database import models as m
+from core.database import models as m
 
 
 @dataclass

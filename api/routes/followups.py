@@ -3,8 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from job_agent.database import models as m
-from job_agent.api.deps import get_db
+from core.database import models as m
+from core.api.deps import get_db
 
 router = APIRouter(prefix="/api/followups", tags=["followups"])
 
@@ -20,7 +20,7 @@ def list_followups(db: Session = Depends(get_db)) -> list[dict]:
 
 @router.post("/process")
 def process(db: Session = Depends(get_db)) -> dict:
-    from job_agent.followups.engine import FollowupEngine
+    from core.followups.engine import FollowupEngine
 
     engine = FollowupEngine(db)
     plans = engine.plan_pending()

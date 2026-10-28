@@ -5,13 +5,13 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from job_agent.database import models as m
+from core.database import models as m
 
 VALID_TRANSITIONS: dict[str, set[str]] = {
     "DISCOVERED": {"VERIFIED", "REJECTED", "CLOSED"},
     "VERIFIED": {"MATCHED", "REJECTED", "CLOSED", "DUPLICATE"},
     "MATCHED": {"READY", "REJECTED", "CLOSED"},
-    "READY": {"PREPARING", "REJECTED", "WITHDRAWN", "HANDOFF_REQUIRED"},
+    "READY": {"PREPARING", "APPLYING", "REJECTED", "WITHDRAWN", "HANDOFF_REQUIRED"},
     "PREPARING": {"APPLYING", "HANDOFF_REQUIRED", "REJECTED"},
     "APPLYING": {"SUBMITTED", "FAILED", "HANDOFF_REQUIRED", "READY"},
     "SUBMITTED": {

@@ -3,8 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from job_agent.api.deps import DiscreteAgents, get_db
-from job_agent.database import models as m
+from core.api.deps import DiscreteAgents, get_db
+from core.database import models as m
 
 router = APIRouter(prefix="/api/interviews", tags=["interviews"])
 

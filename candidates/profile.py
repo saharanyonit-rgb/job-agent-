@@ -6,10 +6,10 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from job_agent.candidates.models import CandidateFactCollection, FactStatus
-from job_agent.candidates.service import CandidateService
-from job_agent.candidates.skills import CandidateSkillService
-from job_agent.database import models as m
+from core.candidates.models import CandidateFactCollection, FactStatus
+from core.candidates.service import CandidateService
+from core.candidates.skills import CandidateSkillService
+from core.database import models as m
 
 
 @dataclass

@@ -7,9 +7,9 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from job_agent.applications.pipeline import ApplicationPipeline
-from job_agent.database import models as m
-from job_agent.matching.engine import MatchResult
+from core.applications.pipeline import ApplicationPipeline
+from core.database import models as m
+from core.matching.engine import MatchResult
 
 # Final strategy classes that can be assigned to an application.
 STRATEGY_CLASSES = [

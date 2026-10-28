@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Iterable
 
-from job_agent.ai.service import chain
-from job_agent.database import models as m
+from core.ai.service import chain
+from core.database import models as m
 
 
 def _norm(s: str | None) -> str:

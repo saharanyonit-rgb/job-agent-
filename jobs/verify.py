@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from job_agent.core.logging_config import get_logger
+from core.core.logging_config import get_logger
 
 log = get_logger(__name__)
 
@@ -180,6 +180,34 @@ class JobVerifier:
         """Check if status code indicates a server error (5xx)."""
         return status_code is not None and 500 <= status_code < 600
 
+    def _verify_via_adapter(
+        self,
+        *,
+        title: str,
+        url: str | None,
+        application_url: str | None,
+        source: str,
+    ) -> VerificationResult:
+        """Verify jobs from bundled offline sources via their adapter's verify_job()."""
+        from core.discovery.base import registry
+
+        adapter = registry.get(source)
+        ref = None
+        for candidate in (url, application_url):
+            if candidate:
+                ref = candidate.rstrip("/").split("/")[-2] if candidate.rstrip("/").endswith("apply") else candidate.rstrip("/").split("/")[-1]
+                break
+        if adapter is not None and ref:
+            try:
+                result = adapter.verify_job(ref)
+                status = str(result.get("status", "UNKNOWN")).upper()
+                if status not in ("ACTIVE", "REMOVED", "EXPIRED", "UNKNOWN"):
+                    status = "UNKNOWN"
+                return VerificationResult(status, source, {"adapter_verify": result, "job_ref": ref})
+            except Exception as exc:  # noqa: BLE001 - verification must never crash the pipeline
+                return VerificationResult("UNKNOWN", source, {"error": f"adapter verify failed: {exc}"})
+        return VerificationResult("UNKNOWN", source, {"error": f"no adapter registered for source '{source}'"})
+
     def verify(
         self,
         *,
@@ -194,6 +222,10 @@ class JobVerifier:
 
         if not title or not company:
             return VerificationResult("UNKNOWN", source, {"error": "missing title or company"})
+
+        # Offline/mock sources: verify via the adapter itself (no live HTTP).
+        if source in ("mock_feed", "mock_ats"):
+            return self._verify_via_adapter(title=title, url=url, application_url=application_url, source=source)
 
         # Primary: direct URL check
         url_ok = False

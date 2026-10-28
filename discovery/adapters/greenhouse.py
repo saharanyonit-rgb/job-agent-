@@ -5,8 +5,8 @@ from typing import Any
 
 import httpx
 
-from job_agent.discovery.base import DiscoveryResult, IntegrationStatus, SourceAdapter
-from job_agent.jobs.normalize import RawJob
+from core.discovery.base import DiscoveryResult, IntegrationStatus, SourceAdapter
+from core.jobs.normalize import RawJob
 
 
 class GreenhouseAdapter(SourceAdapter):

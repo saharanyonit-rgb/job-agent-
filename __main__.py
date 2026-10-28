@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""CLI entry point: `python -m job_agent <command>`.
+"""CLI entry point: `python -m core <command>`.
 
 Commands
 --------
@@ -19,12 +19,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from job_agent.core.config import get_settings
-from job_agent.core.logging_config import get_logger
+from core.core.config import get_settings
+from core.core.logging_config import get_logger
 
 log = get_logger(__name__)
 
-RESUME_DIR = Path(__file__).resolve().parent.parent / "resume"
+RESUME_DIR = Path(__file__).resolve().parent / "resume"
 RESUME_TYPES = {".pdf", ".docx", ".txt"}
 RESUME_MARKER = Path(get_settings().storage_dir) / "resume_imported.hash"
 
@@ -32,7 +32,7 @@ RESUME_MARKER = Path(get_settings().storage_dir) / "resume_imported.hash"
 def _seed_candidate(db) -> list[int]:
     import json
 
-    from job_agent.candidates.service import CandidateService
+    from core.candidates.service import CandidateService
 
     svc = CandidateService(db)
     cand = svc.get_or_create("asha.patel@example.com")
@@ -92,21 +92,55 @@ def _seed_candidate(db) -> list[int]:
     return [cand.id]
 
 
+_REAL_SOURCE_NAMES = ["greenhouse", "lever", "company_career", "linkedin", "indeed", "jsearch"]
+
+
 def _restrict_sources(names: list[str] | None) -> None:
-    """Disable every source adapter except the requested ones (default mock_feed)."""
-    from job_agent.discovery.base import registry, register_default_adapters
+    """Disable every source adapter except the requested ones.
+
+    Default: REAL sources only (fake demo feeds are excluded unless explicitly
+    requested via names=[...] or ALLOW_FAKE_JOBS=1).
+    """
+    from core.discovery.base import registry, register_default_adapters
 
     register_default_adapters()
-    allowed = names or ["mock_feed"]
+    allowed = names or list(_REAL_SOURCE_NAMES)
     for adapter in registry.all():
         adapter.enabled = adapter.name in allowed
     log.info("active sources: %s", allowed)
 
 
+FAKE_SOURCES = ("mock_feed", "mock_ats")
+
+
+def _purge_fake_jobs(db) -> int:
+    """Delete jobs (and dependent rows) that came from fake/demo sources."""
+    from core.database import models as m
+
+    removed = 0
+    for job in db.query(m.Job).filter(m.Job.source.in_(FAKE_SOURCES)).all():
+        app_ids = [a.id for a in db.query(m.Application).filter(m.Application.job_id == job.id).all()]
+        for table, column in (
+            (m.ApplicationEvent, m.ApplicationEvent.application_id),
+            (m.ApplicationStrategy, m.ApplicationStrategy.application_id),
+        ):
+            if app_ids:
+                db.query(table).filter(column.in_(app_ids)).delete(synchronize_session=False)
+        db.query(m.Application).filter(m.Application.job_id == job.id).delete(synchronize_session=False)
+        db.query(m.JobEvent).filter(m.JobEvent.job_id == job.id).delete(synchronize_session=False)
+        db.query(m.Evidence).filter(
+            m.Evidence.entity_type == "job", m.Evidence.entity_id == job.id
+        ).delete(synchronize_session=False)
+        db.delete(job)
+        removed += 1
+    db.commit()
+    return removed
+
+
 def _offline_verifier() -> None:
     """Verify with a local stub so the demo never needs the network."""
-    import job_agent.jobs.service as jobs_service
-    from job_agent.jobs.verify import JobVerifier
+    import core.jobs.service as jobs_service
+    from core.jobs.verify import JobVerifier
 
     class _AlwaysOk:
         def check(self, url: str) -> dict[str, Any]:
@@ -120,12 +154,36 @@ def _offline_verifier() -> None:
     jobs_service.JobVerifier = _factory
 
 
+def _apply_source_policy(args: argparse.Namespace) -> None:
+    """Configure which job sources run for this command.
+
+    Default policy: REAL sources only; fake/demo feeds are excluded and any
+    fake jobs already stored are purged. ``--use-fake-sources`` (or legacy
+    ``--offline``) opts back into the bundled mock feed / Mock ATS demo.
+    """
+    if getattr(args, "use_fake_sources", False) or getattr(args, "offline", False):
+        _restrict_sources(["mock_feed", "mock_ats"])
+        _offline_verifier()
+        return
+    _restrict_sources(None)  # real sources only
+    if not getattr(args, "keep_fake_jobs", False):
+        from core.database.base import SessionLocal
+
+        db = SessionLocal()
+        try:
+            removed = _purge_fake_jobs(db)
+        finally:
+            db.close()
+        if removed:
+            log.info("purged %d fake/demo job(s) from the database", removed)
+
+
 def _require_candidate(db) -> int:
-    from job_agent.database import models as m
+    from core.database import models as m
 
     cand = db.query(m.Candidate).order_by(m.Candidate.id).first()
     if cand is None:
-        print("No candidate found. Run `python -m job_agent seed` first.")
+        print("No candidate found. Run `python -m core seed` first.")
         raise SystemExit(2)
     return cand.id
 
@@ -155,9 +213,9 @@ def _primary_candidate_id(db, models) -> int:
 def _import_resume(db, path: Path, candidate_id: int) -> dict[str, Any]:
     import re
 
-    from job_agent.candidates.resume_parser import extract_text
-    from job_agent.candidates.service import CandidateService
-    from job_agent.database import models as m
+    from core.candidates.resume_parser import extract_text
+    from core.candidates.service import CandidateService
+    from core.database import models as m
 
     db.query(m.CandidateFact).filter(m.CandidateFact.candidate_id == candidate_id).delete()
     db.query(m.CandidateSkill).filter(m.CandidateSkill.candidate_id == candidate_id).delete()
@@ -241,7 +299,7 @@ def _sync_resume(db) -> None:
         return
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     im_ported = RESUME_MARKER.exists() and RESUME_MARKER.read_text(encoding="utf-8").strip() == digest
-    from job_agent.database import models as m
+    from core.database import models as m
 
     has_resume = db.query(m.Resume).count() > 0
     if im_ported and has_resume:
@@ -252,10 +310,10 @@ def _sync_resume(db) -> None:
 
 
 def cmd_import_resume(args: argparse.Namespace) -> int:
-    from job_agent.database.base import SessionLocal, init_db
+    from core.database.base import SessionLocal, init_db
 
     init_db()
-    from job_agent.database import models as m
+    from core.database import models as m
 
     path = Path(args.path) if args.path else _latest_resume_file()
     if path is None:
@@ -277,19 +335,19 @@ def cmd_import_resume(args: argparse.Namespace) -> int:
 def cmd_serve(args: argparse.Namespace) -> int:
     import uvicorn
 
-    uvicorn.run("job_agent.api.app:app", host=args.host, port=args.port)
+    uvicorn.run("core.api.app:app", host=args.host, port=args.port)
     return 0
 
 
 def cmd_ats(args: argparse.Namespace) -> int:
     import uvicorn
 
-    uvicorn.run("mock_ats.app:app", host=args.host, port=args.port)
+    uvicorn.run("core.mock_ats.app:app", host=args.host, port=args.port)
     return 0
 
 
 def cmd_seed(args: argparse.Namespace) -> int:
-    from job_agent.database.base import SessionLocal, init_db
+    from core.database.base import SessionLocal, init_db
 
     init_db(reset=args.reset)
     if args.reset:
@@ -304,13 +362,11 @@ def cmd_seed(args: argparse.Namespace) -> int:
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    from job_agent.database.base import SessionLocal, init_db
-    from job_agent.orchestrator.orchestrator import JobAgentOrchestrator
+    from core.database.base import SessionLocal, init_db
+    from core.orchestrator.orchestrator import JobAgentOrchestrator
 
     init_db()
-    if args.offline:
-        _restrict_sources(None)
-        _offline_verifier()
+    _apply_source_policy(args)
     db = SessionLocal()
     try:
         _sync_resume(db)
@@ -324,13 +380,11 @@ def cmd_run(args: argparse.Namespace) -> int:
 
 
 def cmd_daily(args: argparse.Namespace) -> int:
-    from job_agent.database.base import SessionLocal, init_db
-    from job_agent.orchestrator.orchestrator import JobAgentOrchestrator
+    from core.database.base import SessionLocal, init_db
+    from core.orchestrator.orchestrator import JobAgentOrchestrator
 
     init_db()
-    if args.offline:
-        _restrict_sources(None)
-        _offline_verifier()
+    _apply_source_policy(args)
     db = SessionLocal()
     try:
         _sync_resume(db)
@@ -344,8 +398,8 @@ def cmd_daily(args: argparse.Namespace) -> int:
 
 
 def cmd_status(args: argparse.Namespace) -> int:
-    from job_agent.database.base import SessionLocal, init_db
-    from job_agent.database import models as m
+    from core.database.base import SessionLocal, init_db
+    from core.database import models as m
 
     init_db()
     db = SessionLocal()
@@ -379,7 +433,7 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="job_agent",
+        prog="core",
         description="Evidence-based closed-loop career agent.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
@@ -398,14 +452,34 @@ def build_parser() -> argparse.ArgumentParser:
     seed.add_argument("--reset", action="store_true", help="drop and recreate all tables first")
     seed.set_defaults(func=cmd_seed)
 
-    run = sub.add_parser("run", help="One pipeline iteration")
+    run = sub.add_parser("run", help="One pipeline iteration (real job sources by default)")
     run.add_argument("--submit", action="store_true", help="actually submit (no --submit = dry run)")
-    run.add_argument("--offline", action="store_true", help="mock_feed only, local stub verifier")
+    run.add_argument(
+        "--offline",
+        action="store_true",
+        help="legacy alias for --use-fake-sources (bundled mock feed + Mock ATS demo)",
+    )
+    run.add_argument(
+        "--use-fake-sources",
+        action="store_true",
+        help="use the bundled fake/demo sources (mock_feed + Mock ATS) instead of real job sites",
+    )
+    run.add_argument("--keep-fake-jobs", action="store_true", help="don't purge previously stored fake/demo jobs")
     run.set_defaults(func=cmd_run)
 
-    daily = sub.add_parser("daily", help="Full closed loop + daily report")
+    daily = sub.add_parser("daily", help="Full closed loop + daily report (real job sources by default)")
     daily.add_argument("--submit", action="store_true", help="actually submit (no --submit = dry run)")
-    daily.add_argument("--offline", action="store_true", help="mock_feed only, local stub verifier")
+    daily.add_argument(
+        "--offline",
+        action="store_true",
+        help="legacy alias for --use-fake-sources (bundled mock feed + Mock ATS demo)",
+    )
+    daily.add_argument(
+        "--use-fake-sources",
+        action="store_true",
+        help="use the bundled fake/demo sources (mock_feed + Mock ATS) instead of real job sites",
+    )
+    daily.add_argument("--keep-fake-jobs", action="store_true", help="don't purge previously stored fake/demo jobs")
     daily.set_defaults(func=cmd_daily)
 
     status = sub.add_parser("status", help="Print source health and counts")

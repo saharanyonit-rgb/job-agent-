@@ -4,7 +4,7 @@ import logging
 import sys
 from typing import Any
 
-from job_agent.core.config import get_settings
+from core.core.config import get_settings
 
 
 def setup_logging() -> None:
